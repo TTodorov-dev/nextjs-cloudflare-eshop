@@ -1,38 +1,38 @@
 {
-	"name": "toshcocraft-app",
-	"version": "0.1.0",
-	"private": true,
-	"scripts": {
-		"dev": "next dev",
-		"build": "pnpm lint && next build",
-		"start": "next start",
-		"lint": "eslint .",
-		"format:check": "prettier . --check",
-		"format": "prettier . --write",
-		"deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-		"upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
-		"preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-		"cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts"
-	},
-	"dependencies": {
-		"@opennextjs/cloudflare": "1.20.8",
-		"next": "16.3.8",
-		"react": "19.3.0",
-		"react-dom": "19.3.0"
-	},
-	"devDependencies": {
-		"@tailwindcss/postcss": "4.3.3",
-		"@types/node": "20.19.43",
-		"@types/react": "19.3.0",
-		"@types/react-dom": "19.3.0",
-		"eslint": "9.39.5",
-		"eslint-config-next": "16.3.8",
-		"eslint-config-prettier": "10.1.8",
-		"prettier": "3.9.10",
-		"prettier-plugin-tailwindcss": "0.8.1",
-		"tailwindcss": "4.3.3",
-		"typescript": "5.9.3",
-		"wrangler": "4.147.0"
-	},
-	"packageManager": "pnpm@12.9.1+sha512.06b055fff5cd20dc12781de173ced3310ce0951bf2ec620211a16045d5444d5c93a663210764ef29a653a610459ba0368f0e74f84d80c54723cf95aae7bc0d6d"
+  "name": "toshcocraft-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "pnpm lint && next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "format:check": "prettier . --check",
+    "format": "prettier . --write",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts"
+  },
+  "dependencies": {
+    "@opennextjs/cloudflare": "1.20.8",
+    "next": "16.3.8",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "20.19.43",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.8",
+    "eslint-config-prettier": "10.1.8",
+    "prettier": "3.9.10",
+    "prettier-plugin-tailwindcss": "0.8.1",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "wrangler": "4.147.0"
+  },
+  "packageManager": "pnpm@12.9.1+sha512.06b055fff5cd20dc12781de173ced3310ce0951bf2ec620211a16045d5444d5c93a663210764ef29a653a610459ba0368f0e74f84d80c54723cf95aae7bc0d6d"
 }

@@ -9,6 +9,7 @@ Version 2, 2026-10-06. Supersedes the v1 project brief. Items marked **[ACC]** n
 A website for a small laser engraving shop in Bulgaria selling engraved products (wood, MDF, glass, leather, metal and similar).
 
 Goals:
+
 1. A working online shop that takes real orders.
 2. A portfolio piece for the developer. All code, including the admin panel, is written in-house. Code quality, architecture, tests, CI/CD and documentation must be presentable to employers.
 
@@ -31,25 +32,25 @@ Phase A must not block A+, B or C. Section 8 lists the fields that keep the mode
 
 ## 2. Stack
 
-| Topic | Decision | Notes |
-|---|---|---|
-| Framework | Next.js 16 (App Router), TypeScript strict, exact versions pinned | Pin the newest Next minor that the current `@opennextjs/cloudflare` release notes list as supported. Verified in milestone A1. |
-| Hosting | Cloudflare Workers Paid (5 USD/month) via `@opennextjs/cloudflare` | Bundle limit 10 MiB compressed. CI checks size with `wrangler deploy --dry-run`. |
-| Next cache | OpenNext R2 incremental cache + D1 tag cache | D1 tag cache is fine at low traffic. Switch to the Durable Object tag cache if traffic grows. |
-| Database | Neon Postgres (AWS eu-central-1, Frankfurt) + Hyperdrive + Drizzle ORM on `pg` | Two Hyperdrive configs, see 2.1. |
-| Files | Cloudflare R2. Public bucket `media` on `media.<domain>`. Private bucket `private` for documents and backups. | S3 API via `aws4fetch` for presigned uploads. |
-| Images | Cloudflare Images transformations via a custom `next/image` loader | No sharp on Workers. |
-| Auth | Better Auth: email + password, TOTP 2FA (mandatory), sign-up disabled, single admin seeded from env | Rate limiting stored in the database, see 11. |
-| Admin | Custom panel at `/admin` | Portfolio requirement. |
-| Payments | Stripe Checkout, card only (`payment_method_types: ['card']`; Apple Pay and Google Pay work through card) | Pinned `apiVersion`. `constructEventAsync` for webhooks. |
-| Email | Resend (EU region) + React Email | |
-| PDF | `pdf-lib` + `@pdf-lib/fontkit` with an embedded, subset Cyrillic font | Not `@react-pdf/renderer` (bundle size, memory). |
-| i18n | next-intl. Locales at launch: **`bg` (default, unprefixed URLs), `en`** | Schema supports any number of locales. Adding de, nl, ru, pt, pl, ro later is content work only. |
-| Currency | **EUR only.** Integer cents. **No BGN amounts anywhere** (storefront, emails, invoices, documents). | The mandatory dual display period ended on 8 Aug 2026. |
-| UI | Tailwind CSS + shadcn/ui. Fonts via `next/font` (self-hosted), Cyrillic + Latin Extended subsets | |
-| Analytics | Cloudflare Web Analytics (cookieless) | No cookie banner needed, see 12. |
-| Local dev | Docker Compose: Postgres + Stripe CLI. Storage uses a real R2 dev bucket. | No S3 emulator (MinIO stopped publishing community images in 2025). |
-| CI/CD | GitHub Actions | See 13. |
+| Topic      | Decision                                                                                                      | Notes                                                                                                                          |
+| ---------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Framework  | Next.js 16 (App Router), TypeScript strict, exact versions pinned                                             | Pin the newest Next minor that the current `@opennextjs/cloudflare` release notes list as supported. Verified in milestone A1. |
+| Hosting    | Cloudflare Workers Paid (5 USD/month) via `@opennextjs/cloudflare`                                            | Bundle limit 10 MiB compressed. CI checks size with `wrangler deploy --dry-run`.                                               |
+| Next cache | OpenNext R2 incremental cache + D1 tag cache                                                                  | D1 tag cache is fine at low traffic. Switch to the Durable Object tag cache if traffic grows.                                  |
+| Database   | Neon Postgres (AWS eu-central-1, Frankfurt) + Hyperdrive + Drizzle ORM on `pg`                                | Two Hyperdrive configs, see 2.1.                                                                                               |
+| Files      | Cloudflare R2. Public bucket `media` on `media.<domain>`. Private bucket `private` for documents and backups. | S3 API via `aws4fetch` for presigned uploads.                                                                                  |
+| Images     | Cloudflare Images transformations via a custom `next/image` loader                                            | No sharp on Workers.                                                                                                           |
+| Auth       | Better Auth: email + password, TOTP 2FA (mandatory), sign-up disabled, single admin seeded from env           | Rate limiting stored in the database, see 11.                                                                                  |
+| Admin      | Custom panel at `/admin`                                                                                      | Portfolio requirement.                                                                                                         |
+| Payments   | Stripe Checkout, card only (`payment_method_types: ['card']`; Apple Pay and Google Pay work through card)     | Pinned `apiVersion`. `constructEventAsync` for webhooks.                                                                       |
+| Email      | Resend (EU region) + React Email                                                                              |                                                                                                                                |
+| PDF        | `pdf-lib` + `@pdf-lib/fontkit` with an embedded, subset Cyrillic font                                         | Not `@react-pdf/renderer` (bundle size, memory).                                                                               |
+| i18n       | next-intl. Locales at launch: **`bg` (default, unprefixed URLs), `en`**                                       | Schema supports any number of locales. Adding de, nl, ru, pt, pl, ro later is content work only.                               |
+| Currency   | **EUR only.** Integer cents. **No BGN amounts anywhere** (storefront, emails, invoices, documents).           | The mandatory dual display period ended on 8 Aug 2026.                                                                         |
+| UI         | Tailwind CSS + shadcn/ui. Fonts via `next/font` (self-hosted), Cyrillic + Latin Extended subsets              |                                                                                                                                |
+| Analytics  | Cloudflare Web Analytics (cookieless)                                                                         | No cookie banner needed, see 12.                                                                                               |
+| Local dev  | Docker Compose: Postgres + Stripe CLI. Storage uses a real R2 dev bucket.                                     | No S3 emulator (MinIO stopped publishing community images in 2025).                                                            |
+| CI/CD      | GitHub Actions                                                                                                | See 13.                                                                                                                        |
 
 ### 2.1 Hyperdrive bindings
 
@@ -73,12 +74,12 @@ All platform-specific code lives in `src/lib/`: `db.ts`, `storage.ts`, `images.t
 
 GitHub Actions cron calls `POST /api/cron/<job>` with a secret bearer token. (Alternative: a custom OpenNext worker entry exporting `scheduled`. Decide in A1; GitHub Actions is the default because it is simpler.)
 
-| Job | Schedule | Purpose |
-|---|---|---|
+| Job                          | Schedule     | Purpose                                                                                                 |
+| ---------------------------- | ------------ | ------------------------------------------------------------------------------------------------------- |
 | `release-stale-reservations` | every 10 min | Release stock for pending orders older than 35 min whose Stripe session is expired or was never created |
-| `sync-carrier-offices` | daily 03:00 | Econt and Speedy office and locker lists |
-| `backup` | daily 02:00 | `pg_dump` (runs in the GitHub Action itself) uploaded to the `private` bucket |
-| `audit-file-reminder` | monthly, 5th | Email the admin to generate and submit the Н-18 audit file |
+| `sync-carrier-offices`       | daily 03:00  | Econt and Speedy office and locker lists                                                                |
+| `backup`                     | daily 02:00  | `pg_dump` (runs in the GitHub Action itself) uploaded to the `private` bucket                           |
+| `audit-file-reminder`        | monthly, 5th | Email the admin to generate and submit the Н-18 audit file                                              |
 
 ---
 
@@ -94,6 +95,7 @@ GitHub Actions cron calls `POST /api/cron/<job>` with a secret bearer token. (Al
 ### Checkout delivery step (our own page, before Stripe)
 
 Collects:
+
 - full name, phone (validated as a Bulgarian number with `libphonenumber-js`, stored in E.164), email
 - carrier, delivery type
 - **office / locker:** chosen from a searchable list (synced daily). If the list for that carrier is empty or older than 7 days, the field falls back to free text automatically.
@@ -144,11 +146,14 @@ Labels are created manually in the carriers' systems. The admin enters the track
 Card payments made online are sales that need registration. The shop uses the e-shop alternative mode instead of a fiscal device. This is a dedicated module: `src/modules/fiscal/`.
 
 ### 6.1 Before go-live
+
 - Declare the e-shop to НАП (Приложение 33): domain, company, payment methods, payment provider (Stripe), bank account, software, hosting and database location. Report changes within 7 days.
 - Store the НАП-assigned e-shop number in settings (`nap_eshop_number`).
 
 ### 6.2 Sale document (документ за регистриране на продажба)
+
 Issued automatically when an order becomes `paid`. Contents:
+
 - own **10-digit ascending number**, unique across all operations (`fiscal_documents.number`)
 - УНП (unique sale number), format per Н-18 using the НАП e-shop number
 - merchant name, EIK, address, contact
@@ -161,14 +166,17 @@ Issued automatically when an order becomes `paid`. Contents:
 Generated as a Bulgarian PDF in the `private` bucket, attached to the order confirmation email, downloadable in admin.
 
 ### 6.3 Immutability
+
 - After an order is `paid`, its lines, amounts and fiscal document are never edited or deleted (enforced in code and with a DB trigger that rejects updates to these columns).
 - Cancellations, refunds and returns create new records (`fiscal_documents` with type `storno`, linked to the original).
 
 ### 6.4 Monthly audit file
+
 - Admin page "Audit file": choose a month, generate the XML (Приложение 38), validate it against the official XSD in a unit test, download it.
 - Deadline: by the 15th of the following month according to current sources; confirm **[ACC]**.
 
 ### 6.5 Numbering
+
 All counters (fiscal documents, invoices, credit notes) use a `counters` table row locked with `SELECT ... FOR UPDATE` inside the same transaction that creates the document. No Postgres `SEQUENCE` (it leaves gaps on rollback).
 
 ---
@@ -190,34 +198,35 @@ All counters (fiscal documents, invoices, credit notes) use a `counters` table r
 
 Pattern: base table for language-neutral fields + `*_translations` with primary key `(entity_id, locale)`. Money in integer cents. Timestamps `timestamptz`.
 
-| Table | Fields |
-|---|---|
-| `categories` / `category_translations` | parent_id, sort, published / name, slug, description, seo_title, seo_description |
-| `materials` / `material_translations` | sort / name, care_instructions |
-| `products` / `product_translations` | sku, status (draft/published/archived), category_id, featured, vat_rate_bp, tax_group, withdrawal_exempt (default false) / name, slug, short_description, description, seo_title, seo_description |
-| `product_variants` | product_id, material_id, size, sku, price_cents, stock, reserved, low_stock_threshold, weight_grams, sort |
-| `product_images` / `product_image_translations` | product_id, r2_key, width, height, sort / alt |
-| `stock_movements` | variant_id, delta_stock, delta_reserved, reason, order_id, admin_user_id, note, created_at |
-| `gallery_items` / `gallery_item_translations` | r2_key, width, height, sort, published / title, alt, description |
-| `pages` / `page_translations` | key (about, faq, shipping, returns, terms, privacy), version / title, slug, body_md |
-| `settings` | key, value (jsonb), validated by a typed Zod schema per key |
-| `carriers` | code (econt, speedy), name, tracking_url_template, active |
-| `carrier_offices` | carrier_code, office_code, type (office/locker), name, city, postcode, address, active, synced_at |
-| `orders` | id (uuid), number (human, e.g. `2026-000123`), status, payment_method (`card`; later `cod`), locale, email, phone, full_name, carrier_code, delivery_type, money fields (section 5), vat_breakdown (jsonb), invoice_requested, invoice fields, terms_version, terms_accepted_at, stripe_session_id, stripe_payment_intent_id, tracking_number, confirmation_sent_at, shipped_email_sent_at, admin_notified_at, timestamps |
-| `order_addresses` | order_id, kind (shipping), snapshot of office (code, name, address) or address fields |
-| `order_items` | order_id, line_type (`product`; later `personalized`, `custom_quote`), product_id and variant_id (nullable FK, on delete set null), name snapshot (bg and order locale), variant_label, sku, unit_price_cents, quantity, vat_rate_bp, tax_group, withdrawal_exempt, personalization (jsonb, null in Phase A) |
-| `order_events` | order_id, from_status, to_status, actor (system/admin id/stripe), note, created_at |
-| `fiscal_documents` | number (10-digit), unp, order_id, type (sale/storno), refers_to_id, r2_key, qr_payload, issued_at |
-| `invoices` | number (10-digit), series, order_id, type (invoice/credit_note), refers_to_id, r2_key, issued_at |
-| `counters` | name (fiscal, invoice), value |
-| `withdrawals` | order_id, email, items (jsonb, optional), submitted_at, acknowledged_at, status (received/refunded/rejected), note |
-| `stripe_events` | event_id (unique), type, processed_at |
-| `email_outbox` | to, template, locale, payload (jsonb), status, attempts, last_error, sent_at |
-| `contact_messages` | name, email, message, created_at (deleted after 12 months) |
-| `admin_audit_log` | admin_user_id, action, entity, entity_id, diff (jsonb), created_at |
-| Better Auth tables | user, session, account, verification, two_factor, rate_limit |
+| Table                                           | Fields                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `categories` / `category_translations`          | parent_id, sort, published / name, slug, description, seo_title, seo_description                                                                                                                                                                                                                                                                                                                                          |
+| `materials` / `material_translations`           | sort / name, care_instructions                                                                                                                                                                                                                                                                                                                                                                                            |
+| `products` / `product_translations`             | sku, status (draft/published/archived), category_id, featured, vat_rate_bp, tax_group, withdrawal_exempt (default false) / name, slug, short_description, description, seo_title, seo_description                                                                                                                                                                                                                         |
+| `product_variants`                              | product_id, material_id, size, sku, price_cents, stock, reserved, low_stock_threshold, weight_grams, sort                                                                                                                                                                                                                                                                                                                 |
+| `product_images` / `product_image_translations` | product_id, r2_key, width, height, sort / alt                                                                                                                                                                                                                                                                                                                                                                             |
+| `stock_movements`                               | variant_id, delta_stock, delta_reserved, reason, order_id, admin_user_id, note, created_at                                                                                                                                                                                                                                                                                                                                |
+| `gallery_items` / `gallery_item_translations`   | r2_key, width, height, sort, published / title, alt, description                                                                                                                                                                                                                                                                                                                                                          |
+| `pages` / `page_translations`                   | key (about, faq, shipping, returns, terms, privacy), version / title, slug, body_md                                                                                                                                                                                                                                                                                                                                       |
+| `settings`                                      | key, value (jsonb), validated by a typed Zod schema per key                                                                                                                                                                                                                                                                                                                                                               |
+| `carriers`                                      | code (econt, speedy), name, tracking_url_template, active                                                                                                                                                                                                                                                                                                                                                                 |
+| `carrier_offices`                               | carrier_code, office_code, type (office/locker), name, city, postcode, address, active, synced_at                                                                                                                                                                                                                                                                                                                         |
+| `orders`                                        | id (uuid), number (human, e.g. `2026-000123`), status, payment_method (`card`; later `cod`), locale, email, phone, full_name, carrier_code, delivery_type, money fields (section 5), vat_breakdown (jsonb), invoice_requested, invoice fields, terms_version, terms_accepted_at, stripe_session_id, stripe_payment_intent_id, tracking_number, confirmation_sent_at, shipped_email_sent_at, admin_notified_at, timestamps |
+| `order_addresses`                               | order_id, kind (shipping), snapshot of office (code, name, address) or address fields                                                                                                                                                                                                                                                                                                                                     |
+| `order_items`                                   | order_id, line_type (`product`; later `personalized`, `custom_quote`), product_id and variant_id (nullable FK, on delete set null), name snapshot (bg and order locale), variant_label, sku, unit_price_cents, quantity, vat_rate_bp, tax_group, withdrawal_exempt, personalization (jsonb, null in Phase A)                                                                                                              |
+| `order_events`                                  | order_id, from_status, to_status, actor (system/admin id/stripe), note, created_at                                                                                                                                                                                                                                                                                                                                        |
+| `fiscal_documents`                              | number (10-digit), unp, order_id, type (sale/storno), refers_to_id, r2_key, qr_payload, issued_at                                                                                                                                                                                                                                                                                                                         |
+| `invoices`                                      | number (10-digit), series, order_id, type (invoice/credit_note), refers_to_id, r2_key, issued_at                                                                                                                                                                                                                                                                                                                          |
+| `counters`                                      | name (fiscal, invoice), value                                                                                                                                                                                                                                                                                                                                                                                             |
+| `withdrawals`                                   | order_id, email, items (jsonb, optional), submitted_at, acknowledged_at, status (received/refunded/rejected), note                                                                                                                                                                                                                                                                                                        |
+| `stripe_events`                                 | event_id (unique), type, processed_at                                                                                                                                                                                                                                                                                                                                                                                     |
+| `email_outbox`                                  | to, template, locale, payload (jsonb), status, attempts, last_error, sent_at                                                                                                                                                                                                                                                                                                                                              |
+| `contact_messages`                              | name, email, message, created_at (deleted after 12 months)                                                                                                                                                                                                                                                                                                                                                                |
+| `admin_audit_log`                               | admin_user_id, action, entity, entity_id, diff (jsonb), created_at                                                                                                                                                                                                                                                                                                                                                        |
+| Better Auth tables                              | user, session, account, verification, two_factor, rate_limit                                                                                                                                                                                                                                                                                                                                                              |
 
 Rules:
+
 - Products and variants referenced by orders are never hard-deleted, only archived.
 - Phase C will add a `quotes` table and pay through a Checkout Session per quote (not reusable Payment Links).
 
@@ -278,19 +287,19 @@ Every transition is a guarded update (`... WHERE status = <expected>`) and write
 
 ### 10.2 Storefront (`/[locale]/...`, `bg` unprefixed)
 
-| Page | Content |
-|---|---|
-| Home | Hero, featured products, categories, gallery teaser, how it works, trust signals |
-| Shop | Product grid, filter by category and material, sort by price or newest |
-| Category | Landing page with SEO text |
-| Product | Image gallery, variant picker, stock status, description, care, delivery time, add to cart |
-| Gallery | Finished work |
-| Cart | Slide-over sheet only, with a "Checkout" button |
-| Checkout | Delivery, invoice details, review (section 9) |
-| Success / cancel | Order state or recovery |
-| Withdrawal | "Отказ от договора тук" function (10.3) |
-| Content pages | About, FAQ, shipping, returns, terms, privacy (Markdown from CMS) |
-| Contact | Form with Turnstile, sent through Resend. Static map image linking to a map; no embedded map iframe. |
+| Page             | Content                                                                                              |
+| ---------------- | ---------------------------------------------------------------------------------------------------- |
+| Home             | Hero, featured products, categories, gallery teaser, how it works, trust signals                     |
+| Shop             | Product grid, filter by category and material, sort by price or newest                               |
+| Category         | Landing page with SEO text                                                                           |
+| Product          | Image gallery, variant picker, stock status, description, care, delivery time, add to cart           |
+| Gallery          | Finished work                                                                                        |
+| Cart             | Slide-over sheet only, with a "Checkout" button                                                      |
+| Checkout         | Delivery, invoice details, review (section 9)                                                        |
+| Success / cancel | Order state or recovery                                                                              |
+| Withdrawal       | "Отказ от договора тук" function (10.3)                                                              |
+| Content pages    | About, FAQ, shipping, returns, terms, privacy (Markdown from CMS)                                    |
+| Contact          | Form with Turnstile, sent through Resend. Static map image linking to a map; no embedded map iframe. |
 
 - Localized slugs; the language switcher maps the current page to the target locale's slug. Missing translations fall back to `bg`.
 - Draft content never appears publicly.
@@ -339,6 +348,7 @@ The seed script creates realistic sample categories, materials, products and gal
 ## 12. Legal, privacy, accessibility, SEO
 
 ### Legal [LAW]
+
 - Terms, privacy policy, returns and shipping pages in `bg` (authoritative) and `en`.
 - Company identification (name, EIK, VAT number, address, contact) in the footer and terms.
 - Pre-contract information per ЗЗП: product characteristics, total price, delivery cost and time, payment, withdrawal right and its exceptions, 2-year legal guarantee of conformity.
@@ -347,6 +357,7 @@ The seed script creates realistic sample categories, materials, products and gal
 - Terms are versioned (`pages.version`); the accepted version is stored per order.
 
 ### Privacy (GDPR)
+
 - Processors and recipients listed in the privacy policy: Cloudflare, Neon, Stripe, Resend, Econt, Speedy, and the accountant.
 - EU data regions where available. DPAs accepted with every processor.
 - Retention: orders, fiscal documents and invoices 10 years **[ACC]**; contact messages 12 months; Better Auth sessions per expiry.
@@ -354,9 +365,11 @@ The seed script creates realistic sample categories, materials, products and gal
 - No cookie banner: only cookieless analytics, strictly necessary localStorage (cart) and admin auth cookies. No third-party embeds that set cookies.
 
 ### Accessibility
+
 WCAG 2.1 AA (keyboard navigation, focus states, contrast, alt text). The European Accessibility Act likely exempts the business as a microenterprise **[LAW]**; the target stays AA.
 
 ### SEO
+
 - `generateMetadata` per page and locale, canonical URLs, hreflang alternates, `sitemap.ts` from the database, `robots.ts`.
 - OG image = main product image (no dynamic OG generation).
 - JSON-LD: Organization/LocalBusiness, Product with Offer (price in EUR, availability), BreadcrumbList.
@@ -367,6 +380,7 @@ WCAG 2.1 AA (keyboard navigation, focus states, contrast, alt text). The Europea
 ## 13. Quality
 
 ### Tests
+
 - **Vitest unit:** pricing, VAT rounding (1-cent edge cases), shipping threshold (4999, 5000, 5001), cart validation, slug and locale helpers, order status transitions, fiscal document and QR payload builder, audit file XML against the official XSD.
 - **Vitest integration** (Postgres in Docker): order creation, concurrent reservation race (N parallel checkouts for the last unit), webhook idempotency (same event twice, out of order), paid-after-expiry path, counter numbering under concurrency (no gaps, no duplicates), admin actions reject unauthenticated calls.
 - **Playwright E2E:** browse, cart, delivery step, review step, redirect to Stripe (asserted, not completed), success page driven by signed webhook fixtures; admin login with TOTP, product editing; withdrawal flow.
@@ -374,35 +388,40 @@ WCAG 2.1 AA (keyboard navigation, focus states, contrast, alt text). The Europea
 - **Release smoke test** in the real Workers runtime (`opennextjs-cloudflare preview`).
 
 ### Tooling
+
 ESLint, Prettier, Husky + lint-staged, strict TypeScript (`noUncheckedIndexedAccess`), Renovate (see 11).
 
 ### CI/CD
+
 - PRs: lint, typecheck, unit, integration, build, bundle size check.
 - `main`: migrations against the **direct** Neon connection (not Hyperdrive), then `wrangler deploy`.
 - Branch protection on `main`; all work through PRs.
 
 ### Observability
+
 Workers Logs on. Error tracking (Sentry Workers SDK, after checking OpenNext bundling compatibility). Stripe webhook failure emails. External uptime check.
 
 ### Backups
+
 Nightly `pg_dump` to the `private` bucket with a lifecycle rule. One restore test before launch, documented in the README.
 
 ### Documentation
+
 README with architecture diagram, local setup (`docker compose up`), deploy and restore instructions. Short ADRs for the major decisions (including Hyperdrive split, Н-18 alternative mode, invoice series, bg-first i18n, no dual pricing). `.env.example`.
 
 ---
 
 ## 14. Milestones
 
-| # | Milestone | Done when | Estimate |
-|---|---|---|---|
-| A1 | Skeleton | Next + OpenNext versions pinned and verified (locale proxy works, build passes), page live on the custom domain, query through both Hyperdrive configs, R2 read, D1 tag cache wired, CI green | 2 to 3 days |
-| A2 | Data + i18n | Schema migrated, seed in bg + en, locale routing and switcher | 2 to 3 days |
-| A3 | Admin | Auth with mandatory 2FA, CRUD for catalog, images, gallery, pages, settings, audit log | 6 to 8 days |
-| A4 | Storefront | All public pages localized and cached | 4 to 5 days |
-| A5 | Checkout | Delivery step with office sync, review step, reservation, Stripe, webhooks, sweeper, emails via outbox, order management | 6 to 8 days |
-| A6 | Compliance | Fiscal documents, audit file, invoices and credit notes, withdrawal function, legal pages, accountant TSV export | 5 to 8 days |
-| A7 | Launch | НАП declaration filed, SEO, Lighthouse and accessibility pass, backup restore tested, accountant and lawyer sign-off, Stripe live mode | 2 to 3 days |
+| #   | Milestone   | Done when                                                                                                                                                                                     | Estimate    |
+| --- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| A1  | Skeleton    | Next + OpenNext versions pinned and verified (locale proxy works, build passes), page live on the custom domain, query through both Hyperdrive configs, R2 read, D1 tag cache wired, CI green | 2 to 3 days |
+| A2  | Data + i18n | Schema migrated, seed in bg + en, locale routing and switcher                                                                                                                                 | 2 to 3 days |
+| A3  | Admin       | Auth with mandatory 2FA, CRUD for catalog, images, gallery, pages, settings, audit log                                                                                                        | 6 to 8 days |
+| A4  | Storefront  | All public pages localized and cached                                                                                                                                                         | 4 to 5 days |
+| A5  | Checkout    | Delivery step with office sync, review step, reservation, Stripe, webhooks, sweeper, emails via outbox, order management                                                                      | 6 to 8 days |
+| A6  | Compliance  | Fiscal documents, audit file, invoices and credit notes, withdrawal function, legal pages, accountant TSV export                                                                              | 5 to 8 days |
+| A7  | Launch      | НАП declaration filed, SEO, Lighthouse and accessibility pass, backup restore tested, accountant and lawyer sign-off, Stripe live mode                                                        | 2 to 3 days |
 
 Total: roughly 6 to 8 weeks full-time.
 
@@ -411,6 +430,7 @@ Total: roughly 6 to 8 weeks full-time.
 ## 15. Open confirmations
 
 ### Accountant [ACC]
+
 1. Н-18 alternative mode applies to this shop with Stripe as the payment provider; required document contents and УНП format (6.2).
 2. Audit file format version and deadline (6.4).
 3. Invoice series and whether invoices are issued in-app or in the accountant's software (7).
@@ -418,6 +438,7 @@ Total: roughly 6 to 8 weeks full-time.
 5. For Phase A+: whether card (alternative mode) and cash on delivery via ППП can be combined, and what document ППП sales need.
 
 ### Lawyer [LAW]
+
 1. Current ЗЗП wording for the withdrawal function (10.3).
 2. Order button text and pre-contract information (9, 12).
 3. ADR information wording (12).
