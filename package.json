@@ -8,7 +8,7 @@
 		"start": "next start",
 		"lint": "eslint .",
 		"format:check": "prettier . --check",
-		"format": "prettier . --format",
+		"format": "prettier . --write",
 		"deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
 		"upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
 		"preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
