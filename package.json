@@ -4,9 +4,9 @@
 	"private": true,
 	"scripts": {
 		"dev": "next dev",
-		"build": "next build",
+		"build": "pnpm lint && next build",
 		"start": "next start",
-		"lint": "next lint",
+		"lint": "eslint .",
 		"deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
 		"upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
 		"preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
@@ -19,7 +19,6 @@
 		"react-dom": "19.3.0"
 	},
 	"devDependencies": {
-		"@eslint/eslintrc": "3.3.7",
 		"@tailwindcss/postcss": "4.3.3",
 		"@types/node": "20.19.43",
 		"@types/react": "19.3.0",
