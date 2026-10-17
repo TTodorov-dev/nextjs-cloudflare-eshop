@@ -55,4 +55,18 @@
   ],
   "preview_urls": false,
   "workers_dev": false,
+  "hyperdrive": [
+    // Cached
+    {
+      "binding": "HYPERDRIVE_CATALOG",
+      "id": "8b669312e8124e52a4bb73005b02ebef",
+      "localConnectionString": "postgres://postgres:postgres@localhost:5432/toshcocraft-db",
+    },
+    // Uncached
+    {
+      "binding": "HYPERDRIVE",
+      "id": "7cc2a978ee12466d8311088bb3c0f6f3",
+      "localConnectionString": "postgres://postgres:postgres@localhost:5432/toshcocraft-db",
+    },
+  ],
 }
